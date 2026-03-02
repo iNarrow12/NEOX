@@ -186,20 +186,6 @@ POST /login
 
 The frontend UI (served at `/`) provides a user-friendly interface to all these endpoints.
 
----
-
-## `$ license`
-
-MIT License – see [LICENSE](LICENSE).
-
----
-
-## `$ contact`
-
-For issues or questions, open an issue on GitHub.
-
----
-
 <div align="center">
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer)
