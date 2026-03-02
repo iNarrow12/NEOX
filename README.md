@@ -13,26 +13,22 @@
 
 ```python
 ┌──(neox㉿server)-[~]
-└─$ cat overview.py
+└─$ tree
 
-class NEOX:
-    """Lightweight remote admin tool with web UI"""
-    
-    def __init__(self):
-        self.modules = [
-            "Shell", "System Info", "File Manager",
-            "Task Manager", "Tunnel", "Settings"
-        ]
-        self.auth = "JWT (24h token)"
-        self.logging = "admin.log (all actions recorded)"
-        self.frontend = "index.html (AI-assisted)"
-    
-    def purpose(self):
-        return "Manage remote systems from browser — securely."
-
-agent = NEOX()
-print(agent.purpose())
-# Output: Manage remote systems from browser — securely.
+.
+├── agent.py                 # Main FastAPI app
+├── admin.log                 # Audit log
+├── modules/                  # Backend modules
+│   ├── filemanager.py        # File operations
+│   ├── info.py               # System info
+│   ├── settings.py           # .env management
+│   ├── shell.py              # Shell + file manager
+│   ├── taskmanager.py        # Process control
+│   └── tunnel.py             # SSH reverse tunnel
+├── static/                   # Frontend
+│   └── index.html
+├── requirements.txt          # Dependencies
+└── .env                      # Config (editable via UI)
 ```
 
 ---
@@ -49,27 +45,6 @@ print(agent.purpose())
 | **Settings** | Edit `.env` via browser UI, view logs |
 
 All modules protected by JWT. Every action logged in `admin.log`.
-
----
-
-## `$ project tree`
-
-```
-.
-├── agent.py                 # Main FastAPI app
-├── admin.log                 # Audit log
-├── modules/                  # Backend modules
-│   ├── filemanager.py        # File operations
-│   ├── info.py               # System info
-│   ├── settings.py           # .env management
-│   ├── shell.py              # Shell + file manager
-│   ├── taskmanager.py        # Process control
-│   └── tunnel.py             # SSH reverse tunnel
-├── static/                   # Frontend
-│   └── index.html
-├── requirements.txt          # Dependencies
-└── .env                      # Config (editable via UI)
-```
 
 ---
 
