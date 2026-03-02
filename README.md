@@ -47,7 +47,7 @@ All modules protected by JWT. Every action logged in `admin.log`.
 
 ---
 
-## `$ installation`
+## `$ Installation`
 
 ```bash
 ┌──(user㉿host)-[~]
@@ -97,13 +97,13 @@ Open browser → `http://your-server-ip:8000` → login.
 
 ---
 
-## `$ frontend`
+## `$ Frontend`
 
 The web interface (`static/index.html`) was crafted with assistance from multiple AI coding tools: **DeepSeek**, **Grok**, **Claude Code**, and **Gemini**. It provides a clean, responsive dashboard to interact with all backend modules without manual API calls.
 
 ---
 
-## `$ configuration`
+## `$ Configuration`
 
 Variables editable via **Settings** UI (changes take effect immediately except `API_KEY`/`ADMIN_USER`/`ADMIN_PASS` – restart required).
 
@@ -121,7 +121,7 @@ Variables editable via **Settings** UI (changes take effect immediately except `
 
 ---
 
-## `$ logging`
+## `$ Logging`
 
 All actions (logins, commands, file ops, process changes, tunnel events) are logged to `admin.log` in the project root. Example:
 
@@ -133,7 +133,7 @@ All actions (logins, commands, file ops, process changes, tunnel events) are log
 
 ---
 
-## `$ api overview`
+## `$ API Overview`
 
 All endpoints (except `/login`) require `Authorization: Bearer <token>`.
 
