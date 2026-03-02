@@ -32,7 +32,7 @@
 
 ---
 
-## `$ features`
+## `$ modules`
 
 | Module | Description |
 |--------|-------------|
