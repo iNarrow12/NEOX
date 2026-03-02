@@ -36,12 +36,12 @@
 
 | Module | Description |
 |--------|-------------|
-| **Shell** | Execute commands, change directories, view output |
-| **System Info** | CPU, RAM, disk, network, OS, processes |
-| **File Manager** | Browse, upload, download, delete, rename, edit files |
-| **Task Manager** | List, kill, terminate, suspend, resume processes |
-| **Tunnel** | SSH reverse tunnel (port forwarding) |
-| **Settings** | Edit `.env` via browser UI, view logs |
+| **Shell.py** | Execute commands, change directories, view output |
+| **System Info.py** | CPU, RAM, disk, network, OS, processes |
+| **File Manager.py** | Browse, upload, download, delete, rename, edit files |
+| **Task Manager.py** | List, kill, terminate, suspend, resume processes |
+| **Tunnel.py** | SSH reverse tunnel (port forwarding) |
+| **Settings.py** | Edit `.env` via browser UI, view logs |
 
 All modules protected by JWT. Every action logged in `admin.log`.
 
