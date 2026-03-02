@@ -15,6 +15,12 @@
 
 ![Screenshot of NEOX UI](src/Screenshot%20From%202026-03-02%2022-36-38.png)
 
+<div align="center">
+  <a href="https://github.com/iNarrow12/NEOX/tree/main/src">
+    <img src="https://img.shields.io/badge/View_More-white?style=for-the-badge&logo=github&logoColor=black" alt="View More">
+  </a>
+</div>
+
 ---
 
 ## `$ Tree Overview`
