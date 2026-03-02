@@ -9,7 +9,7 @@
 
 </div>
 
-## `$ overview`
+## `$ Overview`
 
 ```python
 ┌──(neox㉿server)-[~]
