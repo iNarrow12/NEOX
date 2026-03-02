@@ -14,7 +14,6 @@
 ```python
 ┌──(neox㉿server)-[~]
 └─$ tree
-
 .
 ├── agent.py                 # Main FastAPI app
 ├── admin.log                 # Audit log
