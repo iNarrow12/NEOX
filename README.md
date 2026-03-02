@@ -77,7 +77,7 @@ All modules protected by JWT. Every action logged in `admin.log`.
 
 ```bash
 ┌──(user㉿host)-[~]
-└─$ git clone https://github.com/yourusername/neox.git
+└─$ git clone https://github.com/iNarrow12/NEOX.git
 ┌──(user㉿host)-[~]
 └─$ cd neox
 
