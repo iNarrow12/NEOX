@@ -1,3 +1,5 @@
+<div align="center">
+    
 ![header](https://capsule-render.vercel.app/api?type=waving&height=300&color=gradient&text=NEOX&desc=Cross%20Platform%20Remote%20Administration%20Tool&descAlignY=52&fontAlignY=40)
 
 <div align="center">
