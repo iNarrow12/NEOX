@@ -2,8 +2,6 @@
     
 ![header](https://capsule-render.vercel.app/api?type=waving&height=300&color=gradient&text=NEOX&desc=Cross%20Platform%20Remote%20Administration%20Tool&descAlignY=52&fontAlignY=40)
 
-<div align="center">
-
 ![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.8-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge)
