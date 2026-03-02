@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEOX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/phosphor.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{font-family:'Inter',sans-serif;}
+    body{background:#000;}
+    .tab-active{background:white!important;color:black!important;}
+    #term::-webkit-scrollbar{width:4px;}
+    #term::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+    .terminal-line{animation:fadeIn .08s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
+    .file-card{background:white;border:1px solid rgba(0,0,0,.06);border-radius:1rem;transition:all .15s;height:fit-content;align-self:start;}
+    .file-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+    .file-card.hidden-item{opacity:.55;}
+    #ctxMenu{position:fixed;z-index:200;background:white;border:1px solid #e5e7eb;border-radius:.75rem;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:160px;padding:.3rem;}
+    .ctx-item{padding:.45rem .85rem;border-radius:.4rem;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.6rem;color:#111;}
+    .ctx-item:hover{background:#f3f4f6;}
+    .ctx-item.danger{color:#ef4444;}
+    .ctx-item.danger:hover{background:#fef2f2;}
+    .main-scroll::-webkit-scrollbar{width:5px;}
+    .main-scroll::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px;}
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .CodeMirror{height:100%;font-size:13px;}
+    .info-card{background:white;border-radius:1.25rem;padding:1.5rem;border:1px solid rgba(0,0,0,.05);}
+    .bc-sep{color:#bbb;margin:0 2px;user-select:none;}
+    .bc-part{cursor:pointer;padding:2px 6px;border-radius:6px;transition:background .12s;}
+    .bc-part:hover{background:rgba(0,0,0,.06);}
+    .toggle-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.12);cursor:pointer;transition:all .15s;font-size:.78rem;color:rgba(0,0,0,.5);background:white;}
+    .toggle-pill.active{background:black;color:white;border-color:black;}
+    #imgViewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;}
+    #imgViewer.open{display:flex;}
+    #imgViewer img{max-width:90vw;max-height:80vh;border-radius:1rem;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+    #imgViewerBar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);}
+    #imgViewerName{color:white;font-size:.9rem;font-family:monospace;opacity:.85;}
+  </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-10 w-96 text-center">
+    <div class="flex items-center justify-center gap-3 mb-2">
+      <i class="ph-shield-check text-white" style="font-size:2.5rem"></i>
+      <h1 class="text-5xl font-bold tracking-tight text-white">NEOX</h1>
+    </div>
+    <p class="text-zinc-500 text-sm mb-8">Remote Admin Panel</p>
+    <input id="loginUser" type="text" placeholder="Username" autocomplete="username"
+      class="w-full bg-zinc-800 border border-zinc-700 text-white rounded-2xl px-5 py-4 mb-3 outline-none focus:border-zinc-500 transition placeholder-zinc-500 text-center">
+    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"
+      class="w-full bg-zinc-800 border border-zinc-700 text-white rounded-2xl px-5 py-4 mb-5 outline-none focus:border-zinc-500 transition placeholder-zinc-500 text-center">
+    <p id="loginErr" class="text-red-400 text-sm text-center mb-4 hidden">Invalid credentials</p>
+    <button id="loginBtn" onclick="doLogin()"
+      class="w-full bg-white text-black py-4 rounded-2xl font-semibold hover:bg-zinc-100 transition flex items-center justify-center gap-2">
+      <span id="loginBtnTxt">Log In</span><span id="loginSpinner" class="spin hidden"></span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app" class="hidden h-screen flex">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-black border-r border-zinc-800 flex flex-col shrink-0">
+    <div class="p-6 pb-4">
+      <div class="flex items-center gap-3">
+        <i class="ph-shield-check text-white" style="font-size:2rem"></i>
+        <span class="text-3xl font-bold tracking-tight text-white">NEOX</span>
+      </div>
+    </div>
+    <nav class="px-3 space-y-1 mb-2">
+      <button onclick="switchTab(0)" class="tab tab-active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-white/5 transition text-sm font-medium"><i class="ph-info text-lg"></i> Info</button>
+      <button onclick="switchTab(1)" class="tab w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-white/5 transition text-sm font-medium"><i class="ph-terminal text-lg"></i> Shell</button>
+      <button onclick="switchTab(2)" class="tab w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-white/5 transition text-sm font-medium"><i class="ph-folder text-lg"></i> File Manager</button>
+      <button onclick="switchTab(3)" class="tab w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-white/5 transition text-sm font-medium"><i class="ph-activity text-lg"></i> Task Manager</button>
+      <button onclick="switchTab(4)" class="tab w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-white/5 transition text-sm font-medium"><i class="ph-gear text-lg"></i> Settings</button>
+    </nav>
+    <div class="flex-1"></div>
+    <div class="mx-4 border-t border-zinc-800 my-2"></div>
+    <div class="px-3 pb-1 space-y-0.5">
+      <button onclick="powerAction('reboot')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/10 transition text-sm font-medium"><i class="ph-arrow-clockwise text-lg"></i> Reboot</button>
+      <button onclick="powerAction('shutdown')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-400/10 transition text-sm font-medium"><i class="ph-power text-lg"></i> Shutdown</button>
+    </div>
+    <div class="mx-4 border-t border-zinc-800 my-2"></div>
+    <div class="p-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div id="userAvatar" class="w-9 h-9 bg-white text-black rounded-full flex items-center justify-center font-bold text-sm shrink-0"></div>
+        <div><div id="userLabel" class="text-white text-sm font-medium"></div><div class="text-emerald-400 text-xs">● Online</div></div>
+      </div>
+      <button onclick="logout()" class="w-full py-2.5 text-red-400 hover:bg-red-950/50 rounded-xl flex items-center justify-center gap-2 text-sm transition"><i class="ph-sign-out"></i> Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 bg-[#F0F4F9] text-black flex flex-col overflow-hidden">
+
+    <!-- TAB 0: INFO -->
+    <div id="tab0" class="tabcontent flex-1 p-8 overflow-y-auto main-scroll">
+      <h2 class="text-2xl font-semibold mb-6">System Info</h2>
+      <div id="infoCards" class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8"></div>
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i class="ph-list-bullets"></i> Top Processes</h2>
+      <div class="bg-white rounded-2xl border border-black/5 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-black/5 text-black/50 text-xs uppercase">
+            <th class="text-left px-5 py-3">PID</th><th class="text-left px-5 py-3">Name</th>
+            <th class="text-left px-5 py-3">CPU%</th><th class="text-left px-5 py-3">MEM%</th><th class="text-left px-5 py-3">Status</th>
+          </tr></thead>
+          <tbody id="procBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 1: SHELL -->
+    <div id="tab1" class="tabcontent hidden flex-1 flex flex-col p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold">Shell</h2>
+        <button onclick="clearTerm()" class="text-xs border border-black/20 text-black/40 px-4 py-1.5 rounded-lg hover:bg-black/5 transition">clear</button>
+      </div>
+      <div id="term" class="flex-1 bg-zinc-950 text-emerald-300 p-5 rounded-2xl font-mono text-sm overflow-y-auto space-y-0.5 mb-4"></div>
+      <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-black/10 shadow-sm">
+        <span id="shellCwd" class="font-mono text-xs text-black/35 max-w-[130px] truncate shrink-0">~</span>
+        <span class="text-black/30 font-bold text-xl select-none">$</span>
+        <input id="cmdInput" type="text" placeholder="type a command…" class="flex-1 bg-transparent outline-none text-black font-mono text-sm placeholder-black/25" onkeydown="shellKeydown(event)">
+        <button onclick="runCommand()" id="shellBtn" class="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition flex items-center gap-2">Send <span id="shellSpin" class="spin hidden"></span></button>
+      </div>
+    </div>
+
+    <!-- TAB 2: FILE MANAGER -->
+    <div id="tab2" class="tabcontent hidden flex-1 flex flex-col p-8">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-3">
+        <h2 class="text-2xl font-semibold">File Manager</h2>
+        <div class="flex gap-2 items-center flex-wrap">
+          <button id="toggleHidden" onclick="toggleHiddenFiles()" class="toggle-pill"><i class="ph-eye-slash text-sm"></i> Hidden</button>
+          <button onclick="newFile()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition flex items-center gap-1.5"><i class="ph-file-plus"></i> New File</button>
+          <button onclick="newFolder()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition flex items-center gap-1.5"><i class="ph-folder-plus"></i> New Folder</button>
+          <button onclick="triggerUpload()" class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition flex items-center gap-1.5"><i class="ph-upload-simple"></i> Upload</button>
+          <input id="uploadInput" type="file" multiple class="hidden" onchange="handleUpload(event)">
+          
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-black/10 shadow-sm mb-4 overflow-hidden">
+        <div id="breadcrumb" class="flex items-center gap-0.5 px-4 py-2 border-b border-black/5 text-sm overflow-x-auto whitespace-nowrap"></div>
+        <div class="flex items-center gap-2 px-4 py-2.5">
+          <i class="ph-folder-open text-black/30 text-lg shrink-0"></i>
+          <input id="pathBar" type="text" spellcheck="false" placeholder="Type a full path…"
+            class="flex-1 font-mono text-sm text-black/70 bg-transparent outline-none"
+            onkeydown="if(event.key==='Enter') navigateToPath()">
+          <button onclick="navigateToPath()" class="text-xs bg-black/5 hover:bg-black/10 text-black/50 px-3 py-1 rounded-lg transition">Go</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 mb-3">
+        <button id="backBtn" onclick="goBack()" class="flex items-center gap-1.5 text-sm text-black/50 hover:text-black border border-black/15 hover:border-black/30 px-3 py-1.5 rounded-lg transition disabled:opacity-30" disabled><i class="ph-arrow-left text-sm"></i> Back</button>
+        <button id="fwdBtn" onclick="goForward()" class="flex items-center gap-1.5 text-sm text-black/50 hover:text-black border border-black/15 hover:border-black/30 px-3 py-1.5 rounded-lg transition disabled:opacity-30" disabled><i class="ph-arrow-right text-sm"></i> Forward</button>
+        <span id="fmMsg" class="text-sm text-red-500 hidden ml-2"></span>
+      </div>
+      <div id="fileGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 overflow-y-auto main-scroll pr-1 flex-1" style="align-items:start;align-content:start"></div>
+    </div>
+
+    <!-- TAB 3: TASK MANAGER -->
+    <div id="tab3" class="tabcontent hidden flex-1 flex flex-col p-8">
+      <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <h2 class="text-2xl font-semibold">Task Manager</h2>
+        <div class="flex items-center gap-2">
+          <input id="tmSearch" type="text" placeholder="Search process…" oninput="tmFilter()"
+            class="border border-black/15 rounded-lg px-3 py-2 text-sm outline-none focus:border-black/40 bg-white w-48">
+          <button onclick="loadTasks()" class="border border-black/20 text-black/60 px-4 py-2 rounded-lg text-sm hover:bg-black/5 transition"><i class="ph-arrow-clockwise"></i></button>
+          <span class="text-xs text-black/30">auto: <span id="tmAutoTxt">on</span></span>
+          <button onclick="tmToggleAuto()" id="tmAutoBtn" class="border border-black/20 text-black/60 px-4 py-2 rounded-lg text-sm hover:bg-black/5 transition"><i class="ph-pause"></i></button>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <div class="bg-white rounded-2xl px-5 py-3 border border-black/5 flex items-center gap-3">
+          <i class="ph-cpu text-2xl text-black/25"></i>
+          <div><div class="text-xs text-black/40 uppercase tracking-wider font-semibold">CPU</div><div id="tmCpu" class="font-mono text-sm">—</div></div>
+        </div>
+        <div class="bg-white rounded-2xl px-5 py-3 border border-black/5 flex items-center gap-3">
+          <i class="ph-memory text-2xl text-black/25"></i>
+          <div><div class="text-xs text-black/40 uppercase tracking-wider font-semibold">RAM</div><div id="tmRam" class="font-mono text-sm">—</div></div>
+        </div>
+        <div class="bg-white rounded-2xl px-5 py-3 border border-black/5 flex items-center gap-3">
+          <i class="ph-list-numbers text-2xl text-black/25"></i>
+          <div><div class="text-xs text-black/40 uppercase tracking-wider font-semibold">Processes</div><div id="tmCount" class="font-mono text-sm">—</div></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-black/5 overflow-hidden flex flex-col flex-1">
+        <div class="overflow-y-auto main-scroll flex-1">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 bg-white z-10">
+              <tr class="border-b border-black/5 text-black/40 text-xs uppercase">
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('pid')">PID <span id="s-pid"></span></th>
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('name')">Name <span id="s-name"></span></th>
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('user')">User <span id="s-user"></span></th>
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('cpu')">CPU% <span id="s-cpu">↓</span></th>
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('mem_pct')">MEM% <span id="s-mem_pct"></span></th>
+                <th class="text-left px-4 py-3 cursor-pointer hover:text-black select-none" onclick="tmSort('mem_mb')">MEM MB <span id="s-mem_mb"></span></th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tmBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SETTINGS -->
+    <div id="tab4" class="tabcontent hidden flex-1 p-8 overflow-y-auto main-scroll">
+
+      <!-- ── ENV EDITOR ── -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-semibold">Settings</h2>
+          <p class="text-black/40 text-sm mt-0.5">Edit your <span class="font-mono">.env</span> configuration file</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="envAddRow()" class="border border-black/20 text-black/60 px-4 py-2 rounded-lg text-sm hover:bg-black/5 transition flex items-center gap-1.5"><i class="ph-plus"></i> Add Key</button>
+          <button onclick="saveEnv()" class="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition flex items-center gap-2"><i class="ph-floppy-disk"></i> Save <span id="envSpin" class="spin hidden"></span></button>
+        </div>
+      </div>
+      <div id="envMsg" class="hidden rounded-xl px-4 py-3 mb-4 text-sm font-medium"></div>
+      <div class="bg-white rounded-2xl border border-black/5 overflow-hidden mb-8">
+        <div class="px-5 py-3 border-b border-black/5 grid grid-cols-[1fr_2fr_40px] gap-3 text-xs font-semibold text-black/40 uppercase tracking-wider">
+          <span>Key</span><span>Value</span><span></span>
+        </div>
+        <div id="envRows" class="divide-y divide-black/5"></div>
+      </div>
+      <p class="text-xs text-black/30 mb-10">⚠ Restart NEOX after saving for changes to take effect.</p>
+
+      <!-- ── TUNNEL ── -->
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h2 class="text-2xl font-semibold">SSH Tunnel</h2>
+          <p class="text-black/40 text-sm mt-0.5">Reverse SSH tunnel — config is saved to <span class="font-mono">.env</span></p>
+        </div>
+      </div>
+
+      <div id="tunnelBanner" class="hidden rounded-2xl px-5 py-4 mb-6 flex items-center gap-3 text-sm font-medium"></div>
+
+      <div class="bg-white rounded-2xl border border-black/5 p-6 mb-5 grid grid-cols-2 gap-4">
+        <div class="col-span-2 sm:col-span-1">
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">Server Host</label>
+          <input id="tnHost" type="text" placeholder="e.g. test.duckdns.org" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">SSH Port</label>
+          <input id="tnPort" type="number" value="2222" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">Username</label>
+          <input id="tnUser" type="text" value="tunnel" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">Password</label>
+          <input id="tnPass" type="password" placeholder="tunnel password" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">Local NEOX Port</label>
+          <input id="tnLocalPort" type="number" value="8000" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-black/40 uppercase tracking-wider mb-1">Remote Port (on server)</label>
+          <input id="tnRemotePort" type="number" value="8000" class="w-full border border-black/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-black/40 font-mono">
+        </div>
+      </div>
+
+      <div class="flex gap-3 mb-6">
+        <button onclick="tunnelSave()" id="tnSaveBtn" class="border border-black/20 text-black/70 px-7 py-3 rounded-xl font-medium hover:bg-black/5 transition flex items-center gap-2"><i class="ph-floppy-disk"></i> Save to .env <span id="tnSaveSpin" class="spin hidden" style="border-top-color:black"></span></button>
+        <button onclick="tunnelStart()" id="tnStartBtn" class="bg-black text-white px-7 py-3 rounded-xl font-medium hover:bg-zinc-800 transition flex items-center gap-2"><i class="ph-plugs-connected"></i> Connect <span id="tnSpin" class="spin hidden"></span></button>
+        <button onclick="tunnelStop()" id="tnStopBtn" class="hidden bg-red-500 text-white px-7 py-3 rounded-xl font-medium hover:bg-red-600 transition flex items-center gap-2"><i class="ph-plugs"></i> Disconnect</button>
+      </div>
+      <div id="tnSaveMsg" class="hidden rounded-xl px-4 py-3 mb-4 text-sm font-medium"></div>
+
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-black/50">Tunnel Logs</span>
+        <button onclick="refreshTunnelLogs()" class="text-xs border border-black/15 text-black/40 px-3 py-1 rounded-lg hover:bg-black/5 transition"><i class="ph-arrow-clockwise"></i></button>
+      </div>
+      <div id="tnLogs" class="bg-zinc-950 text-emerald-300 rounded-2xl p-4 font-mono text-xs leading-5 h-48 overflow-y-auto main-scroll"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div id="imgViewer">
+  <div id="imgViewerBar" class="flex items-center justify-between w-full px-6 py-4">
+    <span id="imgViewerName" class="text-white font-mono text-sm opacity-80 truncate max-w-lg"></span>
+    <div class="flex items-center gap-2 ml-4 shrink-0">
+      <button id="imgDownloadBtn" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg transition"><i class="ph-download-simple"></i> Download</button>
+      <button onclick="closeImgViewer()" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg transition"><i class="ph-x"></i> Close</button>
+    </div>
+  </div>
+  <img id="imgViewerImg" src="" alt="">
+  <div class="absolute bottom-6 text-white/30 text-xs">Click outside image or press Esc to close</div>
+</div>
+
+<!-- EDITOR MODAL -->
+<div id="editorModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-2xl flex flex-col border border-black/10 shadow-2xl" style="width:90vw;max-width:900px;height:85vh;">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-black/10 shrink-0">
+      <div class="flex items-center gap-3">
+        <i class="ph-file-code text-black/40 text-lg"></i>
+        <span id="editorTitle" class="font-mono text-sm font-medium"></span>
+        <span id="editorDirty" class="text-xs text-amber-500 hidden">● unsaved</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="saveEditor()" class="bg-black text-white text-xs px-4 py-1.5 rounded-lg hover:bg-zinc-800 transition flex items-center gap-1.5"><i class="ph-floppy-disk"></i> Save</button>
+        <button onclick="closeEditor()" class="text-2xl leading-none text-black/30 hover:text-black ml-1">×</button>
+      </div>
+    </div>
+    <div id="cmWrap" class="flex-1 overflow-hidden rounded-b-2xl"></div>
+  </div>
+</div>
+
+<!-- MOVE MODAL -->
+<div id="moveModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-2xl p-7 w-full max-w-sm border border-black/10 shadow-2xl">
+    <h3 class="font-semibold mb-1">Move / Rename</h3>
+    <p id="moveSrcLabel" class="text-xs text-black/40 font-mono mb-4 truncate"></p>
+    <input id="moveDst" type="text" class="w-full border border-black/15 rounded-lg px-3 py-2 text-sm outline-none focus:border-black/40 font-mono mb-5" onkeydown="if(event.key==='Enter') confirmMove()">
+    <div class="flex justify-end gap-2">
+      <button onclick="closeMove()" class="border border-black/20 px-4 py-2 rounded-lg text-sm hover:bg-black/5 transition">Cancel</button>
+      <button onclick="confirmMove()" class="bg-black text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition">Move</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW FILE MODAL -->
+<div id="nfModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-2xl p-7 w-full max-w-sm border border-black/10 shadow-2xl">
+    <h3 class="font-semibold mb-4">New File</h3>
+    <input id="nfName" type="text" placeholder="filename.py" class="w-full border border-black/15 rounded-lg px-3 py-2 text-sm outline-none focus:border-black/40 mb-3" onkeydown="if(event.key==='Enter') confirmNewFile()">
+    <div class="flex flex-wrap gap-2 mb-5" id="nfChips"></div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeNf()" class="border border-black/20 px-4 py-2 rounded-lg text-sm hover:bg-black/5 transition">Cancel</button>
+      <button onclick="confirmNewFile()" class="bg-black text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition">Create & Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctxMenu" class="hidden">
+  <div class="ctx-item" id="ctxOpen"><i class="ph-eye text-black/40"></i> Open</div>
+  <div class="ctx-item" id="ctxEdit"><i class="ph-pencil text-black/40"></i> Edit</div>
+  <div class="ctx-item" id="ctxDownload"><i class="ph-download-simple text-black/40"></i> Download</div>
+  <div class="ctx-item" id="ctxMove"><i class="ph-pencil-line text-black/40"></i> Rename / Move</div>
+  <div class="ctx-item" id="ctxCopy"><i class="ph-copy text-black/40"></i> Copy Path</div>
+  <hr class="my-1 border-black/10">
+  <div class="ctx-item danger" id="ctxDel"><i class="ph-trash"></i> Delete</div>
+</div>
+
+<script>
+(function(){
+  const BASE='';
+  let TOKEN='', currentPath='', editorPath='', moveSrc='';
+  let cmdHistory=[], histIdx=-1, cmEditor=null, infoTimer=null;
+  let showHidden=false, navHistory=[], navIdx=-1;
+  let tmData=[], tmSortKey='cpu', tmSortAsc=false, tmTimer=null, tmAuto=true;
+  let _tnFilled=false, _tnRunning=false, tunnelLogTimer=null;
+
+  const $=id=>document.getElementById(id);
+  function esc(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+  function shortenPath(p){const pts=String(p).replace(/\\/g,'/').split('/');return pts.length>2?'…/'+pts.slice(-2).join('/'):p;}
+  function fileMode(n){const e=(n||'').split('.').pop().toLowerCase();return{py:'python',js:'javascript',ts:'javascript',jsx:'javascript',tsx:'javascript',json:'javascript',html:'htmlmixed',css:'css',scss:'css',sh:'shell',bash:'shell',bat:'shell',md:'markdown'}[e]||'';}
+  function fileIcon(n){const e=(n||'').split('.').pop().toLowerCase();return{py:'ph-file-code',js:'ph-file-code',ts:'ph-file-code',html:'ph-file-html',css:'ph-file-css',json:'ph-file-code',sh:'ph-terminal',bat:'ph-terminal',ps1:'ph-terminal',conf:'ph-gear',env:'ph-gear',yaml:'ph-gear',yml:'ph-gear',toml:'ph-gear',txt:'ph-file-text',md:'ph-file-text',log:'ph-file-text',png:'ph-image',jpg:'ph-image',jpeg:'ph-image',gif:'ph-image',svg:'ph-image',webp:'ph-image',zip:'ph-file-zip',gz:'ph-file-zip',tar:'ph-file-zip',pdf:'ph-file-pdf',exe:'ph-app-window',db:'ph-database',sql:'ph-database'}[e]||'ph-file';}
+  function isImage(n){return/\.(png|jpe?g|gif|svg|webp|bmp|ico)$/i.test(n||'');}
+  function fmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+  function joinPath(base,name){return base.replace(/[\\/]$/,'')+'/'+name;}
+  function isHidden(n){return n.startsWith('.');}
+
+  async function api(url,opts={}){
+    if(TOKEN) opts.headers={...(opts.headers||{}),Authorization:'Bearer '+TOKEN};
+    try{const r=await fetch(BASE+url,opts);if(r.status===401){logout();return null;}return await r.json();}
+    catch{return null;}
+  }
+
+  // ── LOGIN ─────────────────────────────────────────────────────────────────
+  async function doLogin(){
+    const u=$('loginUser').value.trim(),p=$('loginPass').value;
+    if(!u||!p) return;
+    $('loginBtn').disabled=true;$('loginBtnTxt').textContent='Logging in…';$('loginSpinner').classList.remove('hidden');
+    $('loginErr').classList.add('hidden');
+    const res=await api('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    if(res&&res.access_token){
+      TOKEN=res.access_token;
+      $('loginScreen').classList.add('hidden');$('app').classList.remove('hidden');
+      $('userLabel').textContent=u;$('userAvatar').textContent=u[0].toUpperCase();
+      switchTab(0);
+    }else{
+      $('loginErr').classList.remove('hidden');
+      $('loginBtn').disabled=false;$('loginBtnTxt').textContent='Log In';$('loginSpinner').classList.add('hidden');
+    }
+  }
+  window.doLogin=doLogin;
+  function logout(){
+    TOKEN='';clearInterval(infoTimer);
+    $('loginScreen').classList.remove('hidden');$('app').classList.add('hidden');
+    $('loginBtn').disabled=false;$('loginBtnTxt').textContent='Log In';$('loginSpinner').classList.add('hidden');
+  }
+  window.logout=logout;
+  $('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter') doLogin();});
+  $('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter') $('loginPass').focus();});
+
+  // ── TABS ──────────────────────────────────────────────────────────────────
+  // Tabs: 0=Info, 1=Shell, 2=Files, 3=Tasks, 4=Settings(+Tunnel)
+  window.switchTab=function(n){
+    document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('tab-active',i===n));
+    document.querySelectorAll('.tabcontent').forEach(s=>s.classList.add('hidden'));
+    $('tab'+n).classList.remove('hidden');
+    clearInterval(infoTimer);clearInterval(tmTimer);clearInterval(tunnelLogTimer);tmTimer=null;tunnelLogTimer=null;
+    if(n===0) startInfoLoop();
+    if(n===1) $('cmdInput').focus();
+    if(n===2) syncAndLoadFiles();
+    if(n===3) startTmLoop();
+    if(n===4){
+      loadEnv();
+      loadTunnelStatus();
+      tunnelLogTimer=setInterval(()=>{if(_tnRunning)refreshTunnelLogs();},3000);
+    }
+  };
+
+  // ── INFO ──────────────────────────────────────────────────────────────────
+  function startInfoLoop(){loadInfo();infoTimer=setInterval(loadInfo,5000);}
+  async function loadInfo(){
+    const [info,procs]=await Promise.all([api('/api/info/all'),api('/api/info/processes')]);
+    if(!info) return;
+    const o=info.os||{},cpu=info.cpu||{},ram=info.ram||{},disk=info.disk||[];
+    const cards=[
+      {label:'Hostname',icon:'ph-desktop',val:o.hostname||'—'},
+      {label:'User',icon:'ph-user',val:o.username||'—'},
+      {label:'OS',icon:'ph-linux-logo',val:(o.platform||'')+(o.release?' '+o.release:'')},
+      {label:'CPU',icon:'ph-cpu',val:`${cpu.percent||0}% · ${cpu.cores||'?'} cores`},
+      {label:'RAM',icon:'ph-memory',val:`${ram.used||0} / ${ram.total||0} GB (${ram.percent||0}%)`},
+      {label:'Boot',icon:'ph-clock',val:o.boot||'—'},
+    ];
+    const seen=new Set();
+    (Array.isArray(disk)?disk:[]).forEach(d=>{
+      const key=d.mountpoint||d.device||'';
+      if(seen.has(key)) return;seen.add(key);
+      cards.push({label:'Disk '+(d.mountpoint||''),icon:'ph-hard-drive',val:`${d.used||0}/${d.total||0} GB (${d.percent||0}%)`});
+    });
+    $('infoCards').innerHTML=cards.map(c=>`<div class="info-card flex items-start gap-4"><i class="${c.icon} text-3xl text-black/30 shrink-0 mt-0.5"></i><div><div class="text-xs font-semibold text-black/40 uppercase tracking-wider mb-0.5">${c.label}</div><div class="font-mono text-sm text-black/70 break-all">${esc(c.val)}</div></div></div>`).join('');
+    if(procs&&procs.length){
+      $('procBody').innerHTML=procs.map(p=>`<tr class="border-b border-black/5"><td class="px-5 py-2.5 font-mono text-xs text-black/50">${p.pid}</td><td class="px-5 py-2.5 text-sm font-medium">${esc(p.name)}</td><td class="px-5 py-2.5 text-sm">${(p.cpu_percent||0).toFixed(1)}%</td><td class="px-5 py-2.5 text-sm">${(p.memory_percent||0).toFixed(1)}%</td><td class="px-5 py-2.5 text-xs text-black/40">${esc(p.status||'')}</td></tr>`).join('');
+    }
+  }
+
+  // ── SHELL ─────────────────────────────────────────────────────────────────
+  const HELP_CMDS=[['ls [path]','ps'],['pwd','kill <pid>'],['cd [path]','ping <host>'],['cat <file>','curl <url>'],['mkdir <dir>','wget <url>'],['rm <path>','git <args>'],['cp <src> <dst>','python <file>'],['mv <src> <dst>','echo <text>'],['find <args>','clear'],['grep <args>','help']];
+  function termLine(html,cls=''){const el=document.createElement('div');el.className='terminal-line font-mono text-sm leading-5 '+cls;el.innerHTML=html;$('term').appendChild(el);$('term').scrollTop=$('term').scrollHeight;}
+  function clearTerm(){$('term').innerHTML='';}
+  window.clearTerm=clearTerm;
+  function shellKeydown(e){
+    if(e.key==='Enter'){runCommand();return;}
+    if(e.key==='ArrowUp'){e.preventDefault();if(histIdx>0){histIdx--;$('cmdInput').value=cmdHistory[histIdx]||'';}}
+    if(e.key==='ArrowDown'){e.preventDefault();if(histIdx<cmdHistory.length-1){histIdx++;$('cmdInput').value=cmdHistory[histIdx];}else{histIdx=cmdHistory.length;$('cmdInput').value='';}}
+  }
+  window.shellKeydown=shellKeydown;
+  async function runCommand(){
+    const inp=$('cmdInput'),raw=inp.value.trim();if(!raw) return;
+    inp.value='';cmdHistory.push(raw);histIdx=cmdHistory.length;
+    const action=raw.split(/\s+/)[0].toLowerCase();
+    termLine(`<span class="text-zinc-500">$</span> <span class="text-white">${esc(raw)}</span>`);
+    if(action==='clear'){clearTerm();return;}
+    if(action==='help'){renderHelp(raw.split(/\s+/).slice(1).join(' '));return;}
+    $('shellBtn').disabled=true;$('shellSpin').classList.remove('hidden');
+    const res=await api('/api/shell/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:raw})});
+    $('shellBtn').disabled=false;$('shellSpin').classList.add('hidden');
+    if(!res) return;
+    if(res.output) res.output.split('\n').forEach(l=>termLine(esc(l),res.error?'text-red-400':'text-emerald-200'));
+    if(res.cwd){$('shellCwd').textContent=shortenPath(res.cwd);currentPath=res.cwd;}
+    inp.focus();
+  }
+  window.runCommand=runCommand;
+  function renderHelp(arg){
+    const cmd=(arg||'').trim().toLowerCase();termLine('');
+    if(cmd){termLine(`<span class="text-yellow-300 font-semibold">${esc(cmd)}</span> — runs directly on the remote host.`,'text-emerald-200');}
+    else{
+      termLine('<span class="text-white font-semibold">NEOX Shell</span> — full remote shell.','');
+      const tbl=document.createElement('div');tbl.className='help-grid terminal-line my-1';
+      HELP_CMDS.forEach(([l,r])=>[l,r].forEach(c=>{const d=document.createElement('div');d.className='help-row text-emerald-300';d.textContent=c;tbl.appendChild(d);}));
+      $('term').appendChild(tbl);
+    }
+    termLine('');$('term').scrollTop=$('term').scrollHeight;
+  }
+
+  // ── FILE MANAGER ──────────────────────────────────────────────────────────
+  window.toggleHiddenFiles=function(){
+    showHidden=!showHidden;
+    $('toggleHidden').classList.toggle('active',showHidden);
+    $('toggleHidden').innerHTML=showHidden?'<i class="ph-eye text-sm"></i> Hidden':'<i class="ph-eye-slash text-sm"></i> Hidden';
+    loadFiles(currentPath,false);
+  };
+  function pushNav(path){navHistory=navHistory.slice(0,navIdx+1);navHistory.push(path);navIdx=navHistory.length-1;updateNavBtns();}
+  function updateNavBtns(){$('backBtn').disabled=navIdx<=0;$('fwdBtn').disabled=navIdx>=navHistory.length-1;}
+  window.goBack=function(){if(navIdx<=0)return;navIdx--;updateNavBtns();loadFiles(navHistory[navIdx],false);};
+  window.goForward=function(){if(navIdx>=navHistory.length-1)return;navIdx++;updateNavBtns();loadFiles(navHistory[navIdx],false);};
+  function renderBreadcrumb(path){
+    const norm=path.replace(/\\/g,'/');
+    let parts,isWin=false,drive='';
+    if(/^[A-Za-z]:/.test(norm)){isWin=true;drive=norm.slice(0,2);parts=norm.slice(2).split('/').filter(Boolean);}
+    else{parts=norm.split('/').filter(Boolean);}
+    const bc=$('breadcrumb');bc.innerHTML='';
+    function addPart(label,tp){const s=document.createElement('span');s.className='bc-part text-black/60 text-xs font-mono';s.textContent=label;s.onclick=()=>loadFiles(tp);bc.appendChild(s);}
+    function addSep(){const s=document.createElement('span');s.className='bc-sep text-xs';s.textContent='/';bc.appendChild(s);}
+    if(isWin){addPart(drive+'/',drive+'/');}else{addPart('/','/');}
+    let built=isWin?drive:'';
+    parts.forEach((p,i)=>{
+      built+='/'+p;addSep();
+      const s=document.createElement('span');
+      s.className='bc-part text-xs font-mono '+(i===parts.length-1?'text-black font-semibold':'text-black/60');
+      s.textContent=p;const cap=built;s.onclick=()=>loadFiles(cap);bc.appendChild(s);
+    });
+  }
+  async function syncAndLoadFiles(){const d=await api('/api/shell/cwd');if(d&&d.cwd)currentPath=d.cwd;loadFiles(currentPath);}
+  async function loadFiles(path,push=true){
+    if(!path)path=currentPath||'.';currentPath=path;$('pathBar').value=currentPath;
+    if(push)pushNav(currentPath);renderBreadcrumb(currentPath);
+    $('fileGrid').innerHTML='<div class="text-black/30 text-sm col-span-full py-4">Loading…</div>';
+    $('fmMsg').classList.add('hidden');
+    const data=await api('/api/shell/files?path='+encodeURIComponent(currentPath));
+    if(!data){$('fmMsg').textContent='Error loading directory.';$('fmMsg').classList.remove('hidden');$('fileGrid').innerHTML='';return;}
+    renderGrid(data.items||[],data.path||currentPath);
+  }
+  window.loadFiles=loadFiles;
+  function renderGrid(items,basePath){
+    const grid=$('fileGrid');grid.innerHTML='';
+    let visible=items;
+    if(!showHidden)visible=items.filter(i=>!isHidden(i.name));
+    if(!visible.length){
+      const el=document.createElement('div');el.className='text-black/30 text-sm col-span-full py-4';
+      el.textContent=items.length?'All items are hidden. Toggle "Hidden" to show them.':'Empty directory.';
+      grid.appendChild(el);return;
+    }
+    visible.forEach(item=>{
+      const iPath=item.path||joinPath(basePath,item.name);
+      const icon=item.is_dir?'ph-folder':fileIcon(item.name);
+      const col=item.is_dir?'#f59e0b':'#6b7280';
+      const sub=item.is_dir?'folder':fmtSize(item.size||0);
+      const onDl=item.is_dir?null:()=>downloadFile(iPath,item.name);
+      const card=makeCard(icon,col,item.name,sub,()=>{
+        if(item.is_dir)loadFiles(iPath);
+        else if(isImage(item.name))openImgViewer(iPath,item.name);
+        else openEditor(iPath,item.name);
+      },onDl);
+      if(isHidden(item.name))card.classList.add('hidden-item');
+      card.dataset.path=iPath;card.dataset.isdir=item.is_dir?'1':'0';card.dataset.name=item.name;
+      card.addEventListener('contextmenu',e=>{e.preventDefault();showCtx(e,item,iPath);});
+      grid.appendChild(card);
+    });
+  }
+  function makeCard(icon,color,name,sub,onClick,onDownload){
+    const c=document.createElement('div');
+    c.className='file-card p-4 cursor-pointer relative group';
+    c.innerHTML=`<i class="${icon}" style="font-size:2rem;color:${color};display:block;margin-bottom:.5rem"></i><div class="font-medium text-sm truncate">${esc(name)}</div>${sub?`<div class="text-xs text-black/35 mt-0.5">${esc(sub)}</div>`:''}${onDownload?`<button class="dl-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition bg-black/5 hover:bg-black/15 rounded-lg p-1.5" title="Download"><i class="ph-download-simple text-black/50" style="font-size:.95rem"></i></button>`:''}`;
+    c.addEventListener('click',onClick);
+    if(onDownload)c.querySelector('.dl-btn').addEventListener('click',e=>{e.stopPropagation();onDownload();});
+    return c;
+  }
+  window.navigateToPath=function(){loadFiles($('pathBar').value.trim());};
+  window.newFolder=function(){
+    const name=prompt('Folder name:');if(!name||!name.trim())return;
+    api('/api/shell/files/mkdir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:joinPath(currentPath,name.trim())})}).then(()=>loadFiles(currentPath,false));
+  };
+  const EXTS=['.py','.js','.ts','.sh','.txt','.md','.json','.html','.css','.conf','.env','.yaml','.sql'];
+  let nfExt='';
+  window.newFile=function(){
+    $('nfName').value='';nfExt='';
+    const wrap=$('nfChips');wrap.innerHTML='';
+    EXTS.forEach(ext=>{
+      const b=document.createElement('button');
+      b.className='px-3 py-1 rounded-full text-xs border border-black/15 hover:border-black/40 transition font-mono';
+      b.textContent=ext;
+      b.onclick=()=>{nfExt=ext;wrap.querySelectorAll('button').forEach(x=>x.classList.remove('bg-black','text-white','border-black'));b.classList.add('bg-black','text-white','border-black');const cur=$('nfName').value.trim();if(cur&&!cur.includes('.'))$('nfName').value=cur+ext;else if(!cur)$('nfName').focus();};
+      wrap.appendChild(b);
+    });
+    $('nfModal').classList.remove('hidden');setTimeout(()=>$('nfName').focus(),50);
+  };
+  window.closeNf=function(){$('nfModal').classList.add('hidden');};
+  window.confirmNewFile=async function(){
+    let name=$('nfName').value.trim();if(!name)return;
+    if(!name.includes('.')&&nfExt)name+=nfExt;
+    const path=joinPath(currentPath,name);
+    await api('/api/shell/files/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,content:''})});
+    $('nfModal').classList.add('hidden');loadFiles(currentPath,false);openEditor(path,name);
+  };
+
+  // ── IMAGE VIEWER ──────────────────────────────────────────────────────────
+  function openImgViewer(path,name){
+    fetch(BASE+'/api/shell/files/download?path='+encodeURIComponent(path),{headers:{Authorization:'Bearer '+TOKEN}})
+      .then(r=>r.blob()).then(blob=>{
+        const burl=URL.createObjectURL(blob);
+        $('imgViewerImg').src=burl;
+        $('imgViewerName').textContent=name||path.split(/[\\/]/).pop();
+        $('imgDownloadBtn').onclick=()=>downloadFile(path,name);
+        $('imgViewer').classList.add('open');
+        $('imgViewer').onclick=e=>{if(e.target===$('imgViewer')||e.target===$('imgViewerImg'))closeImgViewer();};
+      });
+  }
+  window.closeImgViewer=function(){$('imgViewer').classList.remove('open');URL.revokeObjectURL($('imgViewerImg').src);$('imgViewerImg').src='';};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeImgViewer();});
+
+  // ── EDITOR ────────────────────────────────────────────────────────────────
+  async function openEditor(path,name){
+    editorPath=path;$('editorTitle').textContent=name||path.split(/[\\/]/).pop();$('editorDirty').classList.add('hidden');$('editorModal').classList.remove('hidden');
+    if(!cmEditor){
+      cmEditor=CodeMirror($('cmWrap'),{theme:'dracula',lineNumbers:true,indentWithTabs:false,tabSize:2,lineWrapping:true,extraKeys:{'Ctrl-S':saveEditor,'Cmd-S':saveEditor}});
+      cmEditor.on('change',()=>$('editorDirty').classList.remove('hidden'));
+    }
+    cmEditor.setOption('mode',fileMode(name||path));cmEditor.setValue('Loading…');
+    const res=await api('/api/shell/files/read?path='+encodeURIComponent(path));
+    cmEditor.setValue(res&&res.content!=null?res.content:'');cmEditor.clearHistory();$('editorDirty').classList.add('hidden');
+    setTimeout(()=>cmEditor.refresh(),50);
+  }
+  async function saveEditor(){
+    if(!editorPath)return;
+    await api('/api/shell/files/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:editorPath,content:cmEditor.getValue()})});
+    $('editorDirty').classList.add('hidden');
+  }
+  window.saveEditor=saveEditor;
+  window.closeEditor=function(){
+    if(!$('editorDirty').classList.contains('hidden')&&!confirm('Discard unsaved changes?'))return;
+    $('editorModal').classList.add('hidden');editorPath='';loadFiles(currentPath,false);
+  };
+
+  // ── CONTEXT MENU ──────────────────────────────────────────────────────────
+  let ctxCurrent=null;
+  function showCtx(e,item,path){
+    ctxCurrent={item,path};
+    const img=isImage(item.name);
+    $('ctxEdit').style.display=item.is_dir||img?'none':'flex';
+    $('ctxOpen').style.display=item.is_dir?'none':'flex';
+    $('ctxOpen').innerHTML=`<i class="ph-${img?'image':'eye'} text-black/40"></i> ${img?'View Image':'Open'}`;
+    $('ctxDownload').style.display=item.is_dir?'none':'flex';
+    $('ctxMenu').style.left=e.clientX+'px';$('ctxMenu').style.top=e.clientY+'px';
+    $('ctxMenu').classList.remove('hidden');
+  }
+  document.addEventListener('click',()=>$('ctxMenu').classList.add('hidden'));
+  $('ctxOpen').onclick=()=>{if(!ctxCurrent)return;if(isImage(ctxCurrent.item.name))openImgViewer(ctxCurrent.path,ctxCurrent.item.name);else openEditor(ctxCurrent.path,ctxCurrent.item.name);};
+  $('ctxEdit').onclick=()=>{if(ctxCurrent)openEditor(ctxCurrent.path,ctxCurrent.item.name);};
+  $('ctxDownload').onclick=()=>{if(ctxCurrent&&!ctxCurrent.item.is_dir)downloadFile(ctxCurrent.path,ctxCurrent.item.name);};
+  $('ctxMove').onclick=()=>{if(!ctxCurrent)return;moveSrc=ctxCurrent.path;$('moveSrcLabel').textContent=moveSrc;$('moveDst').value=moveSrc;$('moveModal').classList.remove('hidden');setTimeout(()=>$('moveDst').focus(),50);};
+  $('ctxCopy').onclick=()=>{if(ctxCurrent)navigator.clipboard.writeText(ctxCurrent.path).catch(()=>{});};
+  $('ctxDel').onclick=async()=>{
+    if(!ctxCurrent||!confirm('Delete: '+ctxCurrent.path+'?'))return;
+    await api('/api/shell/files/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:ctxCurrent.path})});
+    loadFiles(currentPath,false);
+  };
+
+  // ── UPLOAD ────────────────────────────────────────────────────────────────
+  window.triggerUpload=function(){$('uploadInput').value='';$('uploadInput').click();};
+  window.handleUpload=async function(e){
+    const files=[...e.target.files];if(!files.length)return;
+    for(const file of files){
+      const tid='toast-'+Date.now()+Math.random();
+      showToast(tid,`<i class="ph-upload-simple"></i> Uploading <b>${esc(file.name)}</b>…`,'progress');
+      try{
+        const form=new FormData();form.append('file',file);form.append('path',currentPath);
+        const r=await fetch(BASE+'/api/shell/files/upload',{method:'POST',headers:{Authorization:'Bearer '+TOKEN},body:form});
+        if(r&&r.ok)updateToast(tid,`<i class="ph-check-circle"></i> <b>${esc(file.name)}</b> uploaded`,'success');
+        else updateToast(tid,`<i class="ph-x-circle"></i> Failed: ${esc(file.name)}`,'error');
+      }catch{updateToast(tid,`<i class="ph-x-circle"></i> Error: ${esc(file.name)}`,'error');}
+      setTimeout(()=>removeToast(tid),3000);
+    }
+    loadFiles(currentPath,false);
+  };
+
+  // ── DOWNLOAD ──────────────────────────────────────────────────────────────
+  async function downloadFile(path,name){
+    try{
+      const r=await fetch(BASE+'/api/shell/files/download?path='+encodeURIComponent(path),{headers:{Authorization:'Bearer '+TOKEN}});
+      if(!r.ok){alert('Download failed');return;}
+      const blob=await r.blob(),url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=name||path.split(/[\\/]/).pop();
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    }catch(e){alert('Download error: '+e.message);}
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────────────────
+  const toastContainer=document.createElement('div');
+  toastContainer.style.cssText='position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:flex;flex-direction:column;gap:.5rem;';
+  document.body.appendChild(toastContainer);
+  function showToast(id,html,type){const el=document.createElement('div');el.id=id;el.style.cssText='padding:.65rem 1rem;border-radius:.75rem;font-size:.82rem;display:flex;align-items:center;gap:.5rem;min-width:220px;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:fadeIn .15s ease;transition:all .2s;';applyToastStyle(el,type);el.innerHTML=html;toastContainer.appendChild(el);}
+  function updateToast(id,html,type){const el=document.getElementById(id);if(!el)return;applyToastStyle(el,type);el.innerHTML=html;}
+  function removeToast(id){const el=document.getElementById(id);if(!el)return;el.style.opacity='0';el.style.transform='translateX(1rem)';setTimeout(()=>el.remove(),200);}
+  function applyToastStyle(el,type){const s={progress:'background:#1a1a1a;color:#d1fae5;border:1px solid #333;',success:'background:#052e16;color:#86efac;border:1px solid #166534;',error:'background:#450a0a;color:#fca5a5;border:1px solid #991b1b;'};el.style.cssText+=s[type]||s.progress;}
+
+  // ── MOVE MODAL ────────────────────────────────────────────────────────────
+  window.closeMove=function(){$('moveModal').classList.add('hidden');};
+  window.confirmMove=async function(){
+    const dst=$('moveDst').value.trim();if(!dst||!moveSrc)return;
+    await api('/api/shell/files/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({src:moveSrc,dst})});
+    $('moveModal').classList.add('hidden');loadFiles(currentPath,false);
+  };
+
+  // ── TASK MANAGER ──────────────────────────────────────────────────────────
+  async function loadTasks(){
+    const [tasks,info]=await Promise.all([api('/api/tasks/list'),api('/api/info/all')]);
+    if(!tasks)return;
+    tmData=tasks;
+    if(info){$('tmCpu').textContent=(info.cpu?.percent||0)+'%';$('tmRam').textContent=`${info.ram?.used||0} / ${info.ram?.total||0} GB (${info.ram?.percent||0}%)`;}
+    $('tmCount').textContent=tasks.length+' processes';
+    tmRender();
+  }
+  function tmRender(){
+    const q=($('tmSearch').value||'').toLowerCase();
+    let rows=[...tmData];
+    if(q)rows=rows.filter(p=>p.name.toLowerCase().includes(q)||String(p.pid).includes(q)||p.user.toLowerCase().includes(q));
+    rows.sort((a,b)=>{const av=a[tmSortKey],bv=b[tmSortKey];return tmSortAsc?(av>bv?1:-1):(av<bv?1:-1);});
+    ['pid','name','user','cpu','mem_pct','mem_mb'].forEach(k=>{const el=$('s-'+k);if(el)el.textContent=k===tmSortKey?(tmSortAsc?'↑':'↓'):'';});
+    const sc={running:'text-emerald-500',sleeping:'text-black/30',idle:'text-blue-400',stopped:'text-yellow-500',zombie:'text-red-400'};
+    $('tmBody').innerHTML=rows.map(p=>`<tr class="border-b border-black/5 hover:bg-black/[0.02]">
+      <td class="px-4 py-2.5 font-mono text-xs text-black/40">${p.pid}</td>
+      <td class="px-4 py-2.5 font-medium max-w-[160px] truncate" title="${esc(p.cmd||p.name)}">${esc(p.name)}</td>
+      <td class="px-4 py-2.5 text-xs text-black/50">${esc(p.user)}</td>
+      <td class="px-4 py-2.5 font-mono text-xs ${p.cpu>50?'text-red-500':p.cpu>20?'text-yellow-500':''}">${p.cpu}%</td>
+      <td class="px-4 py-2.5 font-mono text-xs ${p.mem_pct>20?'text-red-500':p.mem_pct>10?'text-yellow-500':''}">${p.mem_pct}%</td>
+      <td class="px-4 py-2.5 font-mono text-xs text-black/50">${p.mem_mb} MB</td>
+      <td class="px-4 py-2.5"><span class="text-xs font-medium ${sc[p.status]||'text-black/40'}">${p.status}</span></td>
+      <td class="px-4 py-2.5"><div class="flex items-center gap-1.5">
+        ${p.status==='stopped'
+          ?`<button onclick="tmAction('resume',${p.pid})" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 transition"><i class="ph-play"></i> Resume</button>`
+          :`<button onclick="tmAction('suspend',${p.pid})" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-yellow-50 text-yellow-600 hover:bg-yellow-100 border border-yellow-200 transition"><i class="ph-pause"></i> Suspend</button>`}
+        <button onclick="tmAction('terminate',${p.pid})" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-orange-50 text-orange-500 hover:bg-orange-100 border border-orange-200 transition"><i class="ph-stop-circle"></i> Stop</button>
+        <button onclick="tmAction('kill',${p.pid})" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 transition"><i class="ph-skull"></i> Kill</button>
+      </div></td>
+    </tr>`).join('');
+  }
+  window.tmFilter=tmRender;
+  window.tmSort=function(key){if(tmSortKey===key)tmSortAsc=!tmSortAsc;else{tmSortKey=key;tmSortAsc=false;}tmRender();};
+  window.tmAction=async function(action,pid){
+    if(action==='kill'&&!confirm(`Force kill PID ${pid}?`))return;
+    const res=await api(`/api/tasks/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pid})});
+    if(res?.ok)loadTasks();
+    else{showToast('tm-err','<i class="ph-warning"></i> '+(res?.error||'Failed'),'error');setTimeout(()=>removeToast('tm-err'),3000);}
+  };
+  window.tmToggleAuto=function(){
+    tmAuto=!tmAuto;$('tmAutoTxt').textContent=tmAuto?'on':'off';$('tmAutoBtn').innerHTML=tmAuto?'<i class="ph-pause"></i>':'<i class="ph-play"></i>';
+    if(tmAuto)startTmLoop();else{clearInterval(tmTimer);tmTimer=null;}
+  };
+  function startTmLoop(){loadTasks();tmTimer=setInterval(loadTasks,3000);}
+
+  // ── TUNNEL ────────────────────────────────────────────────────────────────
+  async function loadTunnelStatus(){
+    const s=await api('/api/tunnel/status');
+    if(!s)return;
+    if(!_tnFilled){
+      const src=s.running?s:(s.saved||{});
+      if(src.server_host||src.host){
+        $('tnHost').value=src.server_host||src.host||'';
+        $('tnPort').value=src.server_port||2222;
+        $('tnUser').value=src.username||'tunnel';
+        $('tnPass').value=src.password||'';
+        $('tnLocalPort').value=src.local_port||8000;
+        $('tnRemotePort').value=src.remote_port||8000;
+        _tnFilled=true;
+      }
+    }
+    const banner=$('tunnelBanner');
+    if(s.running){
+      _tnRunning=true;
+      banner.className='rounded-2xl px-5 py-4 mb-6 flex items-center gap-3 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+      banner.innerHTML=`<i class="ph-check-circle text-xl"></i> Tunnel active since ${s.connected_at} — <span class="font-mono ml-1">${s.host}:${s.remote_port}</span>`;
+      banner.classList.remove('hidden');$('tnStartBtn').classList.add('hidden');$('tnStopBtn').classList.remove('hidden');
+    }else if(s.error){
+      _tnRunning=false;
+      banner.className='rounded-2xl px-5 py-4 mb-6 flex items-center gap-3 text-sm font-medium bg-red-50 text-red-600 border border-red-200';
+      banner.innerHTML=`<i class="ph-warning text-xl"></i> ${esc(s.error)}`;
+      banner.classList.remove('hidden');$('tnStartBtn').classList.remove('hidden');$('tnStopBtn').classList.add('hidden');
+    }else{
+      _tnRunning=false;
+      banner.classList.add('hidden');$('tnStartBtn').classList.remove('hidden');$('tnStopBtn').classList.add('hidden');
+    }
+    renderTunnelLogs(s.logs||[]);
+  }
+  function renderTunnelLogs(logs){
+    const el=$('tnLogs');
+    if(!logs.length){el.innerHTML='<span class="text-zinc-600">No logs yet…</span>';return;}
+    el.innerHTML=logs.map(l=>{
+      let cls='text-emerald-300';
+      if(/error|fail|refused|denied/i.test(l))cls='text-red-400';
+      else if(/warn/i.test(l))cls='text-yellow-400';
+      else if(/active|connected|\[\+\]/i.test(l))cls='text-emerald-400 font-semibold';
+      else if(/reconnect|attempt|\[~/i.test(l))cls='text-yellow-300';
+      return `<div class="${cls}">${esc(l)}</div>`;
+    }).join('');
+    el.scrollTop=el.scrollHeight;
+  }
+  window.refreshTunnelLogs=async function(){const res=await api('/api/tunnel/logs');if(res)renderTunnelLogs(res.logs||[]);};
+  window.tunnelSave=async function(){
+    const host=$('tnHost').value.trim(),pass=$('tnPass').value;
+    if(!host){alert('Server host is required.');return;}
+    $('tnSaveSpin').classList.remove('hidden');$('tnSaveBtn').disabled=true;
+    const res=await api('/api/tunnel/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      server_host:host,server_port:parseInt($('tnPort').value)||2222,
+      username:$('tnUser').value.trim()||'tunnel',password:pass,
+      local_port:parseInt($('tnLocalPort').value)||8000,
+      remote_port:parseInt($('tnRemotePort').value)||8000,
+    })});
+    $('tnSaveSpin').classList.add('hidden');$('tnSaveBtn').disabled=false;
+    const msg=$('tnSaveMsg');
+    if(res?.ok){
+      msg.className='rounded-xl px-4 py-3 mb-4 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+      msg.textContent='✓ Saved to .env';
+      // refresh the env editor so the new TUNNEL_* keys appear
+      loadEnv();
+    }else{
+      msg.className='rounded-xl px-4 py-3 mb-4 text-sm font-medium bg-red-50 text-red-600 border border-red-200';
+      msg.textContent='✗ '+(res?.error||'Failed to save');
+    }
+    msg.classList.remove('hidden');setTimeout(()=>msg.classList.add('hidden'),4000);
+  };
+  window.tunnelStart=async function(){
+    const host=$('tnHost').value.trim(),pass=$('tnPass').value;
+    if(!host||!pass){alert('Server host and password are required.');return;}
+    $('tnSpin').classList.remove('hidden');$('tnStartBtn').disabled=true;
+    const res=await api('/api/tunnel/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      server_host:host,server_port:parseInt($('tnPort').value)||2222,
+      username:$('tnUser').value.trim()||'tunnel',password:pass,
+      local_port:parseInt($('tnLocalPort').value)||8000,remote_port:parseInt($('tnRemotePort').value)||8000,
+    })});
+    $('tnSpin').classList.add('hidden');$('tnStartBtn').disabled=false;
+    loadTunnelStatus();
+  };
+  window.tunnelStop=async function(){await api('/api/tunnel/stop',{method:'POST'});loadTunnelStatus();};
+
+  // ── SETTINGS / ENV ────────────────────────────────────────────────────────
+  async function loadEnv(){
+    const res=await api('/api/settings/env');if(!res)return;
+    renderEnvRows(res.data||{});
+  }
+  function renderEnvRows(data){
+    const container=$('envRows');container.innerHTML='';
+    Object.entries(data).forEach(([k,v])=>container.appendChild(makeEnvRow(k,v)));
+  }
+  function makeEnvRow(k,v){
+    const row=document.createElement('div');
+    row.className='grid grid-cols-[1fr_2fr_40px] gap-3 items-center px-5 py-3';
+    row.innerHTML=`<input type="text" value="${esc(k)}" placeholder="KEY" class="env-key border border-black/10 rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-black/40 bg-zinc-50"><input type="text" value="${esc(v)}" placeholder="value" class="env-val border border-black/10 rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-black/40"><button onclick="this.closest('.grid').remove()" class="flex items-center justify-center w-8 h-8 rounded-lg text-red-400 hover:bg-red-50 transition"><i class="ph-trash"></i></button>`;
+    return row;
+  }
+  window.envAddRow=function(){$('envRows').appendChild(makeEnvRow('',''));};
+  window.saveEnv=async function(){
+    $('envSpin').classList.remove('hidden');
+    const data={};
+    [...$('envRows').querySelectorAll('.grid')].forEach(row=>{
+      const k=row.querySelector('.env-key').value.trim(),v=row.querySelector('.env-val').value;
+      if(k)data[k]=v;
+    });
+    const res=await api('/api/settings/env',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});
+    $('envSpin').classList.add('hidden');
+    const msg=$('envMsg');
+    if(res?.ok){msg.className='rounded-xl px-4 py-3 mb-4 text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';msg.textContent='✓ Saved! Restart NEOX for changes to take effect.';}
+    else{msg.className='rounded-xl px-4 py-3 mb-4 text-sm font-medium bg-red-50 text-red-600 border border-red-200';msg.textContent='✗ '+(res?.error||'Failed to save');}
+    msg.classList.remove('hidden');setTimeout(()=>msg.classList.add('hidden'),4000);
+  };
+
+  // ── POWER ─────────────────────────────────────────────────────────────────
+  window.powerAction=async function(action){
+    const label=action==='reboot'?'Reboot':'Shutdown';
+    if(!confirm(`Are you sure you want to ${label.toLowerCase()} the remote machine?`))return;
+    await api('/api/shell/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:action==='reboot'?'sudo reboot':'sudo shutdown -h now'})});
+  };
+
+})();
+</script>
+</body>
+</html>
