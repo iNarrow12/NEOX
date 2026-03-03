@@ -111,12 +111,6 @@ Open browser → `http://your-server-ip:8000` → login.
 
 ---
 
-## `$ Frontend`
-
-The web interface (`static/index.html`) was crafted with assistance from multiple AI coding tools: **DeepSeek**, **Grok**, **Claude Code**, and **Gemini**. It provides a clean, responsive dashboard to interact with all backend modules without manual API calls.
-
----
-
 ## `$ Configuration`
 
 Variables editable via **Settings** UI (changes take effect immediately except `API_KEY`/`ADMIN_USER`/`ADMIN_PASS` – restart required).
